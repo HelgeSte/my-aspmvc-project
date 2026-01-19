@@ -51,19 +51,24 @@ jobs:
         run: |
           $msdeploy = "${{ env.MSDEPLOY_PATH }}"
 
-          # Required secrets
-          $server = "${{ secrets.WEBDEPLOY_SERVER }}"   # e.g. "yourserver.example.com"
-          $site   = "${{ secrets.WEBDEPLOY_SITE }}"     # e.g. "Default Web Site" or "MySite"
-          $user   = "${{ secrets.WEBDEPLOY_USER }}"     # e.g. "deployuser"
-          $pass   = "${{ secrets.WEBDEPLOY_PASSWORD }}" # password
+          $server = "${{ secrets.WEBDEPLOY_SERVER }}"
+          $site   = "${{ secrets.WEBDEPLOY_SITE }}"
+          $user   = "${{ secrets.WEBDEPLOY_USER }}"
+          $pass   = "${{ secrets.WEBDEPLOY_PASSWORD }}"
 
-          # WMSvc endpoint for Web Deploy
-          $computerName = "https://$server`:8172/msdeploy.axd?site=$site"
+          $sourcePath = Join-Path "${{ github.workspace }}" "${{ env.PUBLISH_DIR }}"
 
-          & $msdeploy `
-            -verb:sync `
-            -source:contentPath="${{ github.workspace }}\${{ env.PUBLISH_DIR }}" `
-            -dest:contentPath="$site",ComputerName="$computerName",UserName="$user",Password="$pass",AuthType="Basic" `
-            -enableRule:AppOffline `
-            -retryAttempts:2 `
-            -allowUntrusted
+          $args = @(
+            "-verb:sync"
+            "-source:contentPath=$sourcePath"
+            "-dest:contentPath=$site,wmsvc=$server,userName=$user,password=$pass,authType=Basic"
+            "-enableRule:AppOffline"
+            "-retryAttempts:2"
+            "-allowUntrusted"
+          )
+
+          & $msdeploy @args
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "msdeploy failed with exit code $LASTEXITCODE"
+          }
