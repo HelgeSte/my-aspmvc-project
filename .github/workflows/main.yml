@@ -45,7 +45,6 @@ jobs:
 
           "MSDEPLOY_PATH=$msdeploy" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "Using msdeploy: $msdeploy"
-          & $msdeploy
 
       - name: Deploy via msdeploy (WMSvc :8172)
         shell: pwsh
